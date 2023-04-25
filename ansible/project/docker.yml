@@ -33,7 +33,7 @@
         - python3-docker
 
     - name: service docker start
-      shell: sudo service docker start 
+      shell: service docker start 
 
     - name: check docker is active
       service:
