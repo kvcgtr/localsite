@@ -24,6 +24,7 @@ pipeline {
                         
                     } else {
                         echo 'File in html/index.html Not Exists'
+                        error('Stopping - Build Test failed')
                     }
                 }
                 echo '======================Build Finished====================='
@@ -38,6 +39,7 @@ pipeline {
                         echo 'Contend in a File html/index.html is readable'
                     } else {
                         echo 'Contend in a File html/index.html is Not readable'
+                        error('Stopping - File readable test failed')
                     }
                 }
                 echo '======================Test Finished====================='

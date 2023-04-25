@@ -56,6 +56,7 @@
                         
                     } else {
                         echo &apos;File in html/index.html Not Exists&apos;
+                        error(&apos;Stopping - Build Test failed&apos;)
                     }
                 }
                 echo &apos;======================Build Finished=====================&apos;
@@ -70,6 +71,7 @@
                         echo &apos;Contend in a File html/index.html is readable&apos;
                     } else {
                         echo &apos;Contend in a File html/index.html is Not readable&apos;
+                        error(&apos;Stopping - File readable test failed&apos;)
                     }
                 }
                 echo &apos;======================Test Finished=====================&apos;
