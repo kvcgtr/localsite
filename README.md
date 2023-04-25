@@ -53,5 +53,8 @@ Ubuntu, Ansible, Docker, Apache HTTP Server, Git, Jenkins
     - Create a new job - pipeline and add 4 stages "Build", "Test", "Deploy" and "Verify Deployment" in case of changes. Everything in jenkins/config.xml
     - Schedule Poll SCM to run when needed it will pull all from Github if new commits
         
-  
+  Workflow: 
+  - make changes to index.html and save
+  - run ansible-playbook project/git.yml
+  - job build runs automatically on schedule and will update the web server page
   
