@@ -1,0 +1,77 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                echo '======================Build Started====================='
+                git branch: 'main', credentialsId: 'github-ssh', url: 'git@github.com:kvcgtr/localsite.git'
+                echo 'Build Started'
+                sh 'echo "Build by Jenkins Build# $BUILD_NUMBER"'
+                sh 'ls -al html/'
+                script {
+                    def exists = fileExists '/var/lib/jenkins/workspace/localsite/html/index.html'
+                    def scmVars = checkout([$class: 'GitSCM', branches: [[name: '*/main']], 
+                        userRemoteConfigs: [[url: 'https://github.com/kvcgtr/localsite.git']]])
+                    if (exists) {
+                        echo 'File in html/index.html Exists'
+                        env.GIT_COMMIT = scmVars.GIT_COMMIT
+                        env.GIT_BRANCH = scmVars.GIT_BRANCH
+                        sh 'echo "Date: $(date)"'
+                        sh 'ls -al html/'
+                        sh 'echo "Branch name: ${GIT_BRANCH}"'
+                        sh 'echo "Commit hash: ${GIT_COMMIT}"'
+                        
+                    } else {
+                        echo 'File in html/index.html Not Exists'
+                    }
+                }
+                echo '======================Build Finished====================='
+            }
+        }
+        stage('Test') {
+            steps {
+                echo '======================Test Started====================='
+                script {
+                    def readed = readFile '/var/lib/jenkins/workspace/localsite/html/index.html'
+                    if (readed) {
+                        echo 'Contend in a File html/index.html is readable'
+                    } else {
+                        echo 'Contend in a File html/index.html is Not readable'
+                    }
+                }
+                echo '======================Test Finished====================='
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo '======================Deploy Started====================='
+                sshPublisher(publishers: [sshPublisherDesc(configName: 'localsite', 
+                                            transfers: [sshTransfer(cleanRemote: false, 
+                                            excludes: '', 
+                                            execCommand: 'ls -al www/html/', 
+                                            execTimeout: 120000, 
+                                            flatten: true, 
+                                            makeEmptyDirs: true, 
+                                            noDefaultExcludes: true, 
+                                            patternSeparator: '[, ]+',
+                                            remoteDirectory: 'html/', 
+                                            remoteDirectorySDF: false, 
+                                            removePrefix: '', 
+                                            sourceFiles: 'html/*.html')], usePromotionTimestamp: true, useWorkspaceInPromotion: true, verbose: true)])
+                echo '======================Deploy Finished====================='
+            }
+        }
+        stage('Deploy Test if changes') {
+            when {
+                changeset "home/vask/www/html/index.html"
+            }
+            steps {
+                echo "The index file on the webserver was updated"
+                sh 'echo "Date: $(date)"'
+                sh 'ls -al home/vask/www/html/index.html'
+                sh 'cat home/vask/www/html/index.html'
+            }
+        }
+    }
+}

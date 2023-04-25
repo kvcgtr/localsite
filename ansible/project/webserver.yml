@@ -1,0 +1,21 @@
+---
+- name: Create webserver
+  hosts: control
+  become: true
+
+  tasks:
+    - name: Pll HTTPD Image from Docker Hub
+      docker_image:
+            name: httpd
+            source: pull
+            state: present
+
+    - name: Launch Container from HTTPD Docker Image
+      docker_container:
+           name: Apache_Webserver
+           state: started
+           exposed_ports: "80"
+           image: httpd
+           ports: 8081:80
+           volumes: /home/vask/www/html:/usr/local/apache2/htdocs
+           command: httpd -D FOREGROUND

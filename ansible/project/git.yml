@@ -1,0 +1,45 @@
+---
+- hosts: control
+  connection: local
+  
+  tasks:
+    - name: git status
+      shell: ((git -C /home/vask/localsite status | grep modified >> /dev/null 2>&1 && echo yes) || echo no)
+      register: git_status
+
+    - name: Display git status
+      debug:
+        msg: "{{git_status.stdout}}"
+
+    - name: git add 
+      shell: "git -C /home/vask/localsite add ."
+      register: git_add
+      when: git_status.stdout == "yes"
+    
+    - name: Display git add status
+      debug:
+        msg: "{{git_add}}"
+    
+    - name: git commit 
+      shell: "git -C /home/vask/localsite commit -m 'Changed_{{git_add.end}}'"
+      register: git_commit
+      when: git_add.changed == true
+    
+    - name: Display git commit status
+      debug:
+        msg: "{{git_commit}}"
+
+    - name: git status after commit
+      shell: ((git -C /home/vask/localsite status | grep "nothing to commit" >> /dev/null 2>&1 && echo yes) || echo no)
+      register: git_status2
+    
+    - name: git push 
+      shell: "git -C /home/vask/localsite push origin"
+      register: git_push
+      when: 
+        - git_add.changed == true
+        - git_status2.stdout == "yes"
+    
+    - name: Display git push status
+      debug:
+        msg: "{{git_push}}"

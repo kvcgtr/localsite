@@ -1,0 +1,115 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1289.vd1c337fd5354">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@2.2125.vddb_a_44a_d605e"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@2.2125.vddb_a_44a_d605e">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>3</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <hudson.triggers.SCMTrigger>
+          <spec>* * * * *</spec>
+          <ignorePostCommitHooks>false</ignorePostCommitHooks>
+        </hudson.triggers.SCMTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@3659.v582dc37621d8">
+    <script>pipeline {
+    agent any
+
+    stages {
+        stage(&apos;Build&apos;) {
+            steps {
+                echo &apos;======================Build Started=====================&apos;
+                git branch: &apos;main&apos;, credentialsId: &apos;github-ssh&apos;, url: &apos;git@github.com:kvcgtr/localsite.git&apos;
+                echo &apos;Build Started&apos;
+                sh &apos;echo &quot;Build by Jenkins Build# $BUILD_NUMBER&quot;&apos;
+                sh &apos;ls -al html/&apos;
+                script {
+                    def exists = fileExists &apos;/var/lib/jenkins/workspace/localsite/html/index.html&apos;
+                    def scmVars = checkout([$class: &apos;GitSCM&apos;, branches: [[name: &apos;*/main&apos;]], 
+                        userRemoteConfigs: [[url: &apos;https://github.com/kvcgtr/localsite.git&apos;]]])
+                    if (exists) {
+                        echo &apos;File in html/index.html Exists&apos;
+                        env.GIT_COMMIT = scmVars.GIT_COMMIT
+                        env.GIT_BRANCH = scmVars.GIT_BRANCH
+                        sh &apos;echo &quot;Date: $(date)&quot;&apos;
+                        sh &apos;ls -al html/&apos;
+                        sh &apos;echo &quot;Branch name: ${GIT_BRANCH}&quot;&apos;
+                        sh &apos;echo &quot;Commit hash: ${GIT_COMMIT}&quot;&apos;
+                        
+                    } else {
+                        echo &apos;File in html/index.html Not Exists&apos;
+                    }
+                }
+                echo &apos;======================Build Finished=====================&apos;
+            }
+        }
+        stage(&apos;Test&apos;) {
+            steps {
+                echo &apos;======================Test Started=====================&apos;
+                script {
+                    def readed = readFile &apos;/var/lib/jenkins/workspace/localsite/html/index.html&apos;
+                    if (readed) {
+                        echo &apos;Contend in a File html/index.html is readable&apos;
+                    } else {
+                        echo &apos;Contend in a File html/index.html is Not readable&apos;
+                    }
+                }
+                echo &apos;======================Test Finished=====================&apos;
+            }
+        }
+        stage(&apos;Deploy&apos;) {
+            steps {
+                echo &apos;======================Deploy Started=====================&apos;
+                sshPublisher(publishers: [sshPublisherDesc(configName: &apos;localsite&apos;, 
+                                            transfers: [sshTransfer(cleanRemote: false, 
+                                            excludes: &apos;&apos;, 
+                                            execCommand: &apos;ls -al www/html/&apos;, 
+                                            execTimeout: 120000, 
+                                            flatten: true, 
+                                            makeEmptyDirs: true, 
+                                            noDefaultExcludes: true, 
+                                            patternSeparator: &apos;[, ]+&apos;,
+                                            remoteDirectory: &apos;html/&apos;, 
+                                            remoteDirectorySDF: false, 
+                                            removePrefix: &apos;&apos;, 
+                                            sourceFiles: &apos;html/*.html&apos;)], usePromotionTimestamp: true, useWorkspaceInPromotion: true, verbose: true)])
+                echo &apos;======================Deploy Finished=====================&apos;
+            }
+        }
+        stage(&apos;Deploy Test if changes&apos;) {
+            when {
+                changeset &quot;home/vask/www/html/index.html&quot;
+            }
+            steps {
+                echo &quot;The index file on the webserver was updated&quot;
+                sh &apos;echo &quot;Date: $(date)&quot;&apos;
+                sh &apos;ls -al home/vask/www/html/index.html&apos;
+                sh &apos;cat home/vask/www/html/index.html&apos;
+            }
+        }
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
