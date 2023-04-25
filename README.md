@@ -55,6 +55,6 @@ Ubuntu, Ansible, Docker, Apache HTTP Server, Git, Jenkins
         
   Workflow: 
   - make changes to index.html and save
-  - run ansible-playbook project/git.yml
+  - run ansible-playbook project/git.yml (this step can be scheduled on a cronjob)
   - job build runs automatically on schedule and will update the web server page
   
