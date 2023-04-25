@@ -46,7 +46,7 @@ Ubuntu, Ansible, Docker, Apache HTTP Server, Git, Jenkins
   
   - Create a new repository on github and clone it to local (requires installation of ssh keys)
   - Upload a previously converted document to this repository
-  - Run ansible playbook to upload new file to Githud
+  - Run ansible playbook to upload new file to Github
       -#sudo ansible-playbook project/git.yml
   
   - Open and configure Jenkins, I install the recommended plugins and add one Publish Over SSH (requires installation of ssh keys)
