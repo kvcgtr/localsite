@@ -7,7 +7,7 @@ Tasks:
 - Automate your hosting solution
 
 Solutions:
-Install Ubuntu 20.04 - used Windows subsystem, used Ansible to automate installation process and automation for Git, used Docker to host Webserver, used Jenkins CI/CD 
+Install Ubuntu 20.04 - used windows subsystem for linux, Ansible to automate installation process and automation for Git, Docker to host Webserver, Jenkins CI/CD 
 
 Requarements:
 Ubuntu, Ansible, Docker, Apache HTTP Server, Git, Jenkins
