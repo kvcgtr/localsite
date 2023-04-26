@@ -4,24 +4,19 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                echo '======================Build Started====================='
-                git branch: 'main', credentialsId: 'github-ssh', url: 'git@github.com:kvcgtr/localsite.git'
-                echo 'Build Started'
-                sh 'echo "Build by Jenkins Build# $BUILD_NUMBER"'
-                sh 'ls -al html/'
                 script {
                     def exists = fileExists '/var/lib/jenkins/workspace/localsite/html/index.html'
                     def scmVars = checkout([$class: 'GitSCM', branches: [[name: '*/main']], 
-                        userRemoteConfigs: [[url: 'https://github.com/kvcgtr/localsite.git']]])
+                        userRemoteConfigs: [[credentialsId: 'github-ssh', url: 'git@github.com:kvcgtr/localsite.git']],])
                     if (exists) {
+                        echo '======================Build Started====================='
+                        echo 'Build by Jenkins Build# $BUILD_NUMBER'
                         echo 'File in html/index.html Exists'
                         env.GIT_COMMIT = scmVars.GIT_COMMIT
                         env.GIT_BRANCH = scmVars.GIT_BRANCH
                         sh 'echo "Date: $(date)"'
-                        sh 'ls -al html/'
                         sh 'echo "Branch name: ${GIT_BRANCH}"'
                         sh 'echo "Commit hash: ${GIT_COMMIT}"'
-                        
                     } else {
                         echo 'File in html/index.html Not Exists'
                         error('Stopping - Build Test failed')
@@ -32,8 +27,8 @@ pipeline {
         }
         stage('Test') {
             steps {
-                echo '======================Test Started====================='
                 script {
+                    echo '======================Test Started====================='
                     def readed = readFile '/var/lib/jenkins/workspace/localsite/html/index.html'
                     if (readed) {
                         echo 'Contend in a File html/index.html is readable'
@@ -49,9 +44,9 @@ pipeline {
             steps {
                 echo '======================Deploy Started====================='
                 sshPublisher(publishers: [sshPublisherDesc(configName: 'localsite', 
-                                            transfers: [sshTransfer(cleanRemote: false, 
+                                            transfers: [sshTransfer(cleanRemote: true, 
                                             excludes: '', 
-                                            execCommand: 'ls -al www/html/', 
+                                            execCommand: 'ls -al www/html/index.html', 
                                             execTimeout: 120000, 
                                             flatten: true, 
                                             makeEmptyDirs: true, 
@@ -60,19 +55,16 @@ pipeline {
                                             remoteDirectory: 'html/', 
                                             remoteDirectorySDF: false, 
                                             removePrefix: '', 
-                                            sourceFiles: 'html/*.html')], usePromotionTimestamp: true, useWorkspaceInPromotion: true, verbose: true)])
+                                            sourceFiles: 'html/*.html')], usePromotionTimestamp: true, useWorkspaceInPromotion: false, verbose: true)])
                 echo '======================Deploy Finished====================='
             }
         }
-        stage('Deploy Test if changes') {
-            when {
-                changeset "home/vask/www/html/index.html"
-            }
+        stage('Verify Deployment') {
             steps {
-                echo "The index file on the webserver was updated"
+                echo "The index file on the webserver"
                 sh 'echo "Date: $(date)"'
-                sh 'ls -al home/vask/www/html/index.html'
-                sh 'cat home/vask/www/html/index.html'
+                sh 'ls -al /home/vask/www/html/index.html'
+                sh 'cat /home/vask/www/html/index.html'
             }
         }
     }

@@ -36,24 +36,19 @@
     stages {
         stage(&apos;Build&apos;) {
             steps {
-                echo &apos;======================Build Started=====================&apos;
-                git branch: &apos;main&apos;, credentialsId: &apos;github-ssh&apos;, url: &apos;git@github.com:kvcgtr/localsite.git&apos;
-                echo &apos;Build Started&apos;
-                sh &apos;echo &quot;Build by Jenkins Build# $BUILD_NUMBER&quot;&apos;
-                sh &apos;ls -al html/&apos;
                 script {
                     def exists = fileExists &apos;/var/lib/jenkins/workspace/localsite/html/index.html&apos;
                     def scmVars = checkout([$class: &apos;GitSCM&apos;, branches: [[name: &apos;*/main&apos;]], 
-                        userRemoteConfigs: [[url: &apos;https://github.com/kvcgtr/localsite.git&apos;]]])
+                        userRemoteConfigs: [[credentialsId: &apos;github-ssh&apos;, url: &apos;git@github.com:kvcgtr/localsite.git&apos;]],])
                     if (exists) {
+                        echo &apos;======================Build Started=====================&apos;
+                        echo &apos;Build by Jenkins Build# $BUILD_NUMBER&apos;
                         echo &apos;File in html/index.html Exists&apos;
                         env.GIT_COMMIT = scmVars.GIT_COMMIT
                         env.GIT_BRANCH = scmVars.GIT_BRANCH
                         sh &apos;echo &quot;Date: $(date)&quot;&apos;
-                        sh &apos;ls -al html/&apos;
                         sh &apos;echo &quot;Branch name: ${GIT_BRANCH}&quot;&apos;
                         sh &apos;echo &quot;Commit hash: ${GIT_COMMIT}&quot;&apos;
-                        
                     } else {
                         echo &apos;File in html/index.html Not Exists&apos;
                         error(&apos;Stopping - Build Test failed&apos;)
@@ -64,8 +59,8 @@
         }
         stage(&apos;Test&apos;) {
             steps {
-                echo &apos;======================Test Started=====================&apos;
                 script {
+                    echo &apos;======================Test Started=====================&apos;
                     def readed = readFile &apos;/var/lib/jenkins/workspace/localsite/html/index.html&apos;
                     if (readed) {
                         echo &apos;Contend in a File html/index.html is readable&apos;
@@ -81,9 +76,9 @@
             steps {
                 echo &apos;======================Deploy Started=====================&apos;
                 sshPublisher(publishers: [sshPublisherDesc(configName: &apos;localsite&apos;, 
-                                            transfers: [sshTransfer(cleanRemote: false, 
+                                            transfers: [sshTransfer(cleanRemote: true, 
                                             excludes: &apos;&apos;, 
-                                            execCommand: &apos;ls -al www/html/&apos;, 
+                                            execCommand: &apos;ls -al www/html/index.html&apos;, 
                                             execTimeout: 120000, 
                                             flatten: true, 
                                             makeEmptyDirs: true, 
@@ -92,24 +87,20 @@
                                             remoteDirectory: &apos;html/&apos;, 
                                             remoteDirectorySDF: false, 
                                             removePrefix: &apos;&apos;, 
-                                            sourceFiles: &apos;html/*.html&apos;)], usePromotionTimestamp: true, useWorkspaceInPromotion: true, verbose: true)])
+                                            sourceFiles: &apos;html/*.html&apos;)], usePromotionTimestamp: true, useWorkspaceInPromotion: false, verbose: true)])
                 echo &apos;======================Deploy Finished=====================&apos;
             }
         }
-        stage(&apos;Deploy Test if changes&apos;) {
-            when {
-                changeset &quot;home/vask/www/html/index.html&quot;
-            }
+        stage(&apos;Verify Deployment&apos;) {
             steps {
-                echo &quot;The index file on the webserver was updated&quot;
+                echo &quot;The index file on the webserver&quot;
                 sh &apos;echo &quot;Date: $(date)&quot;&apos;
-                sh &apos;ls -al home/vask/www/html/index.html&apos;
-                sh &apos;cat home/vask/www/html/index.html&apos;
+                sh &apos;ls -al /home/vask/www/html/index.html&apos;
+                sh &apos;cat /home/vask/www/html/index.html&apos;
             }
         }
     }
-}
-</script>
+}</script>
     <sandbox>true</sandbox>
   </definition>
   <triggers/>
